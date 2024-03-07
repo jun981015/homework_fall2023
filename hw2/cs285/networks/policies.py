@@ -6,8 +6,8 @@ from torch import optim
 import numpy as np
 import torch
 from torch import distributions
-
 from cs285.infrastructure import pytorch_util as ptu
+
 
 
 class MLPPolicy(nn.Module):
@@ -54,13 +54,16 @@ class MLPPolicy(nn.Module):
         )
 
         self.discrete = discrete
-
     @torch.no_grad()
     def get_action(self, obs: np.ndarray) -> np.ndarray:
         """Takes a single observation (as a numpy array) and returns a single action (as a numpy array)."""
         # TODO: implement get_action
-        action = None
-
+        dist = self(ptu.from_numpy(obs.reshape(1,-1)))
+        if self.discrete:
+            action = int(dist.sample())
+            
+        else:
+            action = ptu.to_numpy(dist.sample().squeeze())
         return action
 
     def forward(self, obs: torch.FloatTensor):
@@ -71,11 +74,14 @@ class MLPPolicy(nn.Module):
         """
         if self.discrete:
             # TODO: define the forward pass for a policy with a discrete action space.
-            pass
+            logits = self.logits_net(obs.to(ptu.device))
+            action_dist =distributions.Categorical(probs = None,logits=logits)# distributions.Bernoulli(probs=None,logits=logits[:,1]) if logits.shape[-1]==2 else distributions.Categorical(probs = None,logits=logits)
+            return action_dist
         else:
             # TODO: define the forward pass for a policy with a continuous action space.
-            pass
-        return None
+            mean = self.mean_net(obs)
+            action_dist = distributions.MultivariateNormal(mean,scale_tril=torch.diag(self.logstd.exp()))
+            return action_dist
 
     def update(self, obs: np.ndarray, actions: np.ndarray, *args, **kwargs) -> dict:
         """Performs one iteration of gradient descent on the provided batch of data."""
@@ -95,10 +101,20 @@ class MLPPolicyPG(MLPPolicy):
         obs = ptu.from_numpy(obs)
         actions = ptu.from_numpy(actions)
         advantages = ptu.from_numpy(advantages)
-
         # TODO: implement the policy gradient actor update.
-        loss = None
-
+        loss = 0
+        dist = self(obs)
+        if self.discrete:
+            log_prob = dist.log_prob(actions)
+            assert log_prob.shape == advantages.shape
+            loss = -torch.mul(log_prob,advantages).mean()
+        else:
+            log_prob = dist.log_prob(actions)
+            assert log_prob.shape == advantages.shape
+            loss = torch.neg((torch.mul(log_prob,advantages))).mean()
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
         return {
             "Actor Loss": ptu.to_numpy(loss),
         }

@@ -65,21 +65,26 @@ def run_training_loop(args):
 
     total_envsteps = 0
     start_time = time.time()
-
+    print('obdim:',ob_dim,'acdim',ac_dim)
+    torch.autograd.set_detect_anomaly(True)
     for itr in range(args.n_iter):
         print(f"\n********** Iteration {itr} ************")
         # TODO: sample `args.batch_size` transitions using utils.sample_trajectories
         # make sure to use `max_ep_len`
-        trajs, envsteps_this_batch = None, None  # TODO
+        agent.actor.eval()
+        trajs, envsteps_this_batch = utils.sample_trajectories(env,agent.actor,args.batch_size,max_ep_len)  # TODO
         total_envsteps += envsteps_this_batch
 
         # trajs should be a list of dictionaries of NumPy arrays, where each dictionary corresponds to a trajectory.
         # this line converts this into a single dictionary of lists of NumPy arrays.
+        
         trajs_dict = {k: [traj[k] for traj in trajs] for k in trajs[0]}
-
+        
+        
         # TODO: train the agent using the sampled trajectories and the agent's update function
-        train_info: dict = None
-
+        agent.train()
+        train_info: dict = agent.update(trajs_dict['observation'],trajs_dict['action'],trajs_dict['reward'],trajs_dict['terminal'])
+        
         if itr % args.scalar_log_freq == 0:
             # save eval metrics
             print("\nCollecting data for eval...")
@@ -118,7 +123,8 @@ def run_training_loop(args):
                 max_videos_to_save=MAX_NVIDEO,
                 video_title="eval_rollouts",
             )
-
+    last= utils.sample_trajectory(env,agent.actor,max_ep_len,render=True)
+    utils.gif_maker(last['image_obs'],'SAMPLE_GIF',logdir.split('/')[-1])
 
 def main():
     import argparse
@@ -166,7 +172,7 @@ def main():
 
     if not (os.path.exists(data_path)):
         os.makedirs(data_path)
-
+    global logdir
     logdir = (
         logdir_prefix
         + args.exp_name

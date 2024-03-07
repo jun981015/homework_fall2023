@@ -51,10 +51,10 @@ def build_mlp(
     layers = []
     in_size = input_size
     for _ in range(n_layers):
-        layers.append(nn.Linear(in_size, size))
+        layers.append(nn.Linear(in_size, size,dtype=torch.float32))
         layers.append(activation)
         in_size = size
-    layers.append(nn.Linear(in_size, output_size))
+    layers.append(nn.Linear(in_size, output_size,dtype=torch.float32))
     layers.append(output_activation)
 
     mlp = nn.Sequential(*layers)
@@ -66,7 +66,10 @@ def init_gpu(use_gpu=True, gpu_id=0):
     global device
     if torch.cuda.is_available() and use_gpu:
         device = torch.device("cuda:" + str(gpu_id))
-        print("Using GPU id {}".format(gpu_id))
+        print("Using CUDA id {}".format(gpu_id))
+    # elif torch.backends.mps.is_available() and use_gpu:
+    #     device = torch.device("mps:" + str(gpu_id))
+    #     print("Using MPS id {}".format(gpu_id))
     else:
         device = torch.device("cpu")
         print("Using CPU.")
@@ -77,7 +80,7 @@ def set_device(gpu_id):
 
 
 def from_numpy(*args, **kwargs):
-    return torch.from_numpy(*args, **kwargs).float().to(device)
+    return torch.from_numpy(*args, **kwargs).float().to(device=device,dtype=torch.float32)
 
 
 def to_numpy(tensor):

@@ -6,11 +6,23 @@ import gym
 import cv2
 from cs285.infrastructure import pytorch_util as ptu
 from typing import Dict, Tuple, List
-
+from matplotlib.animation import FuncAnimation
+from matplotlib import pyplot as plt
+import os
 ############################################
 ############################################
-
-
+def gif_maker(frames,path = '.',gif_name='output'):
+    def animate(frame):
+        plt.cla()  # 이전 그래프를 지웁니다.
+        plt.imshow(frames[frame])  # 현재 프레임을 표시합니다.
+        plt.axis('off')  # 축을 표시하지 않습니다.
+    fig = plt.figure(figsize=(6, 6))
+    ani = FuncAnimation(fig, animate, frames=len(frames), interval=100) 
+    if not os.path.exists(path):
+        os.makedirs(path)
+    gif_filename =os.path.join(path,f'{gif_name}.gif')
+    
+    ani.save(gif_filename, writer='pillow')
 def sample_trajectory(
     env: gym.Env, policy: MLPPolicy, max_length: int, render: bool = False
 ) -> Dict[str, np.ndarray]:
@@ -30,15 +42,12 @@ def sample_trajectory(
             )
 
         # TODO use the most recent ob and the policy to decide what to do
-        ac: np.ndarray = None
-
+        ac: np.ndarray = policy.get_action(ob)
         # TODO: use that action to take a step in the environment
-        next_ob, rew, done, _ = None, None, None, None
-
+        next_ob, rew, done, _ = env.step(ac)
         # TODO rollout can end due to done, or due to max_length
         steps += 1
-        rollout_done: bool = None
-
+        rollout_done: bool = done or steps == max_length
         # record result of taking that action
         obs.append(ob)
         acs.append(ac)
@@ -51,7 +60,6 @@ def sample_trajectory(
         # end the rollout if the rollout ended
         if rollout_done:
             break
-
     return {
         "observation": np.array(obs, dtype=np.float32),
         "image_obs": np.array(image_obs, dtype=np.uint8),
@@ -73,6 +81,7 @@ def sample_trajectories(
     timesteps_this_batch = 0
     trajs = []
     while timesteps_this_batch < min_timesteps_per_batch:
+        
         # collect rollout
         traj = sample_trajectory(env, policy, max_length, render)
         trajs.append(traj)
