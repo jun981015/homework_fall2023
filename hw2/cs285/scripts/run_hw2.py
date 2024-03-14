@@ -123,8 +123,8 @@ def run_training_loop(args):
                 max_videos_to_save=MAX_NVIDEO,
                 video_title="eval_rollouts",
             )
-    last= utils.sample_trajectory(env,agent.actor,max_ep_len,render=True)
-    utils.gif_maker(last['image_obs'],'SAMPLE_GIF',logdir.split('/')[-1])
+    traj = utils.sample_trajectory(env,agent.actor,max_ep_len,render=True)
+    utils.gif_maker(traj['image_obs'],'SAMPLE_GIF',logdir.split('/')[-1])
 
 def main():
     import argparse

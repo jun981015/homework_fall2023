@@ -1,7 +1,6 @@
-import time
-import argparse
-
-from cs285.agents.dqn_agent import DQNAgent
+# import time
+# import argparse
+from agents.dqn_agent import DQNAgent
 import cs285.env_configs
 
 import os
@@ -19,7 +18,7 @@ from cs285.infrastructure.logger import Logger
 from cs285.infrastructure.replay_buffer import MemoryEfficientReplayBuffer, ReplayBuffer
 
 from scripting_utils import make_logger, make_config
-
+import argparse
 MAX_NVIDEO = 2
 
 

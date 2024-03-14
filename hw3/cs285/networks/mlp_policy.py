@@ -64,7 +64,6 @@ class MLPPolicy(nn.Module):
                         torch.full((ac_dim,), 0.0, dtype=torch.float32, device=ptu.device)
                     )
 
-
     def forward(self, obs: torch.FloatTensor) -> distributions.Distribution:
         """
         This function defines the forward pass of the network.  You can return anything you want, but you should be
