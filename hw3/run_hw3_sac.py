@@ -2,7 +2,7 @@ import os
 import time
 import yaml
 
-from hw3.cs285.agents.soft_actor_critic import SoftActorCritic
+from cs285.agents.soft_actor_critic import SoftActorCritic
 from cs285.infrastructure.replay_buffer import ReplayBuffer
 import cs285.env_configs
 
@@ -19,7 +19,7 @@ import tqdm
 from cs285.infrastructure import utils
 from cs285.infrastructure.logger import Logger
 
-from scripting_utils import make_logger, make_config
+from cs285.scripts.scripting_utils import make_logger, make_config
 
 import argparse
 
@@ -68,7 +68,7 @@ def run_training_loop(config: dict, logger: Logger, args: argparse.Namespace):
             action = env.action_space.sample()
         else:
             # TODO(student): Select an action
-            action = ...
+            action = agent.get_action(observation)
 
         # Step the environment and add the data to the replay buffer
         next_observation, reward, done, info = env.step(action)
@@ -90,9 +90,10 @@ def run_training_loop(config: dict, logger: Logger, args: argparse.Namespace):
         # Train the agent
         if step >= config["training_starts"]:
             # TODO(student): Sample a batch of config["batch_size"] transitions from the replay buffer
-            batch = ...
-            update_info = ...
-
+            batch = replay_buffer.sample(config["batch_size"])
+            transitions = ptu.from_numpy(batch)
+            update_info = agent.update(*transitions.values(),step=step)
+            
             # Logging
             update_info["actor_lr"] = agent.actor_lr_scheduler.get_last_lr()[0]
             update_info["critic_lr"] = agent.critic_lr_scheduler.get_last_lr()[0]
@@ -153,7 +154,7 @@ def main():
 
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--no_gpu", "-ngpu", action="store_true")
-    parser.add_argument("--which_gpu", "-g", default=0)
+    parser.add_argument("--which_gpu", "-g", default=1)
     parser.add_argument("--log_interval", type=int, default=1000)
 
     args = parser.parse_args()

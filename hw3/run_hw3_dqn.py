@@ -118,13 +118,13 @@ def run_training_loop(config: dict, logger: Logger, args: argparse.Namespace):
         # Main DQN training loop
         if step >= config["learning_starts"]:
             # TODO(student): Sample config["batch_size"] samples from the replay buffer
-            batch = replay_buffer.sample(config['batch_size'])
+            transitions = replay_buffer.sample(config['batch_size'])
 
             # Convert to PyTorch tensors
-            batch = ptu.from_numpy(batch)
+            transitions = ptu.from_numpy(transitions)
 
             # TODO(student): Train the agent. `batch` is a dictionary of numpy arrays,
-            update_info = agent.update(*batch.values(),step)
+            update_info = agent.update(*transitions.values(),step)
 
             # Logging code
             update_info["epsilon"] = epsilon

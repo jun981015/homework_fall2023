@@ -8,7 +8,7 @@ exp_name: clipq
 base_config: sac
 env_name: HalfCheetah-v4
 
-total_steps: 1000000
+total_steps: 300000
 random_steps: 5000
 training_starts: 10000
 
